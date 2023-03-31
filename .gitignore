@@ -1,0 +1,10 @@
+.phpunit.result.cache
+config/.phpcs-cache
+config/.phpunit.result.cache
+.idea/
+public/bundles/
+var/
+out/
+vendor/
+google-service-account.json
+.DS_Store

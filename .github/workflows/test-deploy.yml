@@ -1,0 +1,45 @@
+name: Package Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Validate composer.json and composer.lock
+        run: composer validate
+
+      - name: Cache Composer packages
+        id: composer-cache
+        uses: actions/cache@v2
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-
+      - name: Install dependencies
+        if: steps.composer-cache.outputs.cache-hit != 'true'
+        run: composer install --prefer-dist --no-progress --no-suggest
+
+      - name: Check Code Standards
+        run: vendor/bin/phpcs --colors -ps
+
+      - name: Static Analysis
+        run: php -d memory_limit=-1 vendor/bin/phpstan analyse src --level=max --ansi
+
+      - name: Unit tests
+        run: vendor/bin/phpunit --testdox --color=always
+
+      - name: Mutation tests
+        run: vendor/bin/infection --threads=2 --min-msi=100 --ansi && cat var/log/infection.log
+
+      - name: Mutation Report
+        run: cat var/log/infection.log
+        if: ${{ always() }}
