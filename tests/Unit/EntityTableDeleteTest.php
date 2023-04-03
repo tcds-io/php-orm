@@ -7,29 +7,29 @@ namespace Test\Tcds\Io\Orm\Unit;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Tcds\Io\Orm\Connection\Connection;
-use Test\Tcds\Io\Orm\Fixtures\AddressRepository;
+use Test\Tcds\Io\Orm\Fixtures\Address;
+use Test\Tcds\Io\Orm\Fixtures\AddressEntityTable;
 
-class RepositoryDeleteWhereTest extends TestCase
+class EntityTableDeleteTest extends TestCase
 {
     private Connection&MockObject $connection;
-    private AddressRepository $repository;
+    private AddressEntityTable $table;
 
     protected function setUp(): void
     {
         $this->connection = $this->createMock(Connection::class);
-        $this->repository = new AddressRepository($this->connection);
+        $this->table = new AddressEntityTable($this->connection);
     }
 
     public function testGivenWhereWhenNotEmptyWhenRunQueryWithWhereAndLimitAndReturnOnlyOneEntry(): void
     {
+        $address = new Address(id: 'address-xxx', street: "Galaxy Avenue");
+
         $this->connection
             ->expects($this->once())
-            ->method('execute')
-            ->with(
-                "DELETE FROM addresses WHERE id = :id",
-                [':id' => 'address-xxx'],
-            );
+            ->method('write')
+            ->with("DELETE FROM addresses WHERE id = :id", [':id' => 'address-xxx']);
 
-        $this->repository->deleteWhere(['id' => 'address-xxx']);
+        $this->table->delete($address);
     }
 }

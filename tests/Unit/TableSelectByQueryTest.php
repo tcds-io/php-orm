@@ -9,19 +9,19 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Tcds\Io\Orm\Connection\Connection;
 use Test\Tcds\Io\Orm\Fixtures\Address;
-use Test\Tcds\Io\Orm\Fixtures\AddressRepository;
+use Test\Tcds\Io\Orm\Fixtures\AddressTable;
 
-class RepositorySelectByQueryTest extends TestCase
+class TableSelectByQueryTest extends TestCase
 {
     private Connection&MockObject $connection;
     private PDOStatement&MockObject $statement;
-    private AddressRepository $repository;
+    private AddressTable $table;
 
     protected function setUp(): void
     {
         $this->connection = $this->createMock(Connection::class);
         $this->statement = $this->createMock(PDOStatement::class);
-        $this->repository = new AddressRepository($this->connection);
+        $this->table = new AddressTable($this->connection);
     }
 
     public function testGivenASqlQueryAndItsBindingsThenBypassTheQueryToTheConnectionAndReturnTheItemList(): void
@@ -36,11 +36,11 @@ class RepositorySelectByQueryTest extends TestCase
 
         $this->connection
             ->expects($this->once())
-            ->method('execute')
+            ->method('read')
             ->with("select * from addresses where street LIKE :street", [':street' => 'Galaxy%'])
             ->willReturn($this->statement);
 
-        $result = $this->repository->findByQuery(
+        $result = $this->table->findByQuery(
             "select * from addresses where street LIKE :street",
             [':street' => 'Galaxy%'],
         );

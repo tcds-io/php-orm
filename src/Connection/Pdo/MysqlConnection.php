@@ -8,10 +8,11 @@ use PDO;
 
 class MysqlConnection extends NestedTransactionConnection
 {
-    public function __construct(PDO $pdo)
+    public function __construct(PDO $read, PDO $write)
     {
-        $pdo->setAttribute(PDO::MYSQL_ATTR_INIT_COMMAND, 'SET NAMES utf8');
+        $read->setAttribute(PDO::MYSQL_ATTR_INIT_COMMAND, 'SET NAMES utf8');
+        $write->setAttribute(PDO::MYSQL_ATTR_INIT_COMMAND, 'SET NAMES utf8');
 
-        parent::__construct($pdo);
+        parent::__construct($read, $write);
     }
 }

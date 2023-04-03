@@ -8,17 +8,17 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Tcds\Io\Orm\Connection\Connection;
 use Test\Tcds\Io\Orm\Fixtures\Address;
-use Test\Tcds\Io\Orm\Fixtures\AddressRepository;
+use Test\Tcds\Io\Orm\Fixtures\AddressTable;
 
-class RepositoryInsertTest extends TestCase
+class TableInsertTest extends TestCase
 {
     private Connection&MockObject $connection;
-    private AddressRepository $repository;
+    private AddressTable $table;
 
     protected function setUp(): void
     {
         $this->connection = $this->createMock(Connection::class);
-        $this->repository = new AddressRepository($this->connection);
+        $this->table = new AddressTable($this->connection);
     }
 
     public function testGivenAnEntryThenRunInsertWithItsData(): void
@@ -27,7 +27,7 @@ class RepositoryInsertTest extends TestCase
 
         $this->connection
             ->expects($this->once())
-            ->method('execute')
+            ->method('write')
             ->with(
                 <<<SQL
                     INSERT INTO addresses (id, street)
@@ -36,6 +36,6 @@ class RepositoryInsertTest extends TestCase
                 [':id' => 'address-xxx', ':street' => "Galaxy Avenue"],
             );
 
-        $this->repository->insert($address);
+        $this->table->insert($address);
     }
 }

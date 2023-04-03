@@ -9,19 +9,19 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Tcds\Io\Orm\Connection\Connection;
 use Test\Tcds\Io\Orm\Fixtures\Address;
-use Test\Tcds\Io\Orm\Fixtures\AddressRepository;
+use Test\Tcds\Io\Orm\Fixtures\AddressTable;
 
-class RepositorySelectTest extends TestCase
+class TableSelectTest extends TestCase
 {
     private Connection&MockObject $connection;
     private PDOStatement&MockObject $statement;
-    private AddressRepository $repository;
+    private AddressTable $table;
 
     protected function setUp(): void
     {
         $this->connection = $this->createMock(Connection::class);
         $this->statement = $this->createMock(PDOStatement::class);
-        $this->repository = new AddressRepository($this->connection);
+        $this->table = new AddressTable($this->connection);
     }
 
     public function testGivenWhereConditionWhenNotEmptyThenSelectWithWhereStatement(): void
@@ -32,14 +32,14 @@ class RepositorySelectTest extends TestCase
 
         $this->connection
             ->expects($this->once())
-            ->method('execute')
+            ->method('read')
             ->with(
                 "SELECT * FROM addresses WHERE id = :id AND street = :street",
                 [':id' => 'address-xxx', ':street' => "Galaxy Avenue"],
             )
             ->willReturn($this->statement);
 
-        $result = $this->repository->findBy(['id' => 'address-xxx', 'street' => 'Galaxy Avenue']);
+        $result = $this->table->findBy(['id' => 'address-xxx', 'street' => 'Galaxy Avenue']);
 
         $this->assertEquals(
             [
@@ -61,11 +61,11 @@ class RepositorySelectTest extends TestCase
 
         $this->connection
             ->expects($this->once())
-            ->method('execute')
+            ->method('read')
             ->with("SELECT * FROM addresses", [])
             ->willReturn($this->statement);
 
-        $result = $this->repository->findBy([]);
+        $result = $this->table->findBy([]);
 
         $this->assertEquals(
             [
@@ -88,11 +88,11 @@ class RepositorySelectTest extends TestCase
 
         $this->connection
             ->expects($this->once())
-            ->method('execute')
+            ->method('read')
             ->with("SELECT * FROM addresses LIMIT 5 OFFSET 15", [])
             ->willReturn($this->statement);
 
-        $result = $this->repository->findBy(where: [], limit: 5, offset: 15);
+        $result = $this->table->findBy(where: [], limit: 5, offset: 15);
 
         $this->assertEquals(
             [

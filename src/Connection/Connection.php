@@ -8,11 +8,6 @@ use PDOStatement;
 
 interface Connection
 {
-    /**
-     * @param array<string, string|int|float|bool|null> $params
-     */
-    public function execute(string $statement, array $params = []): PDOStatement;
-
     public function begin(): void;
 
     public function commit(): void;
@@ -20,4 +15,14 @@ interface Connection
     public function rollback(): void;
 
     public function transaction(callable $fn): mixed;
+
+    /**
+     * @param array<string, string|int|float|bool|null> $params
+     */
+    public function read(string $statement, array $params = []): PDOStatement;
+
+    /**
+     * @param array<string, string|int|float|bool|null> $params
+     */
+    public function write(string $statement, array $params = []): PDOStatement;
 }

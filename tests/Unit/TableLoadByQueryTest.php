@@ -9,36 +9,33 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Tcds\Io\Orm\Connection\Connection;
 use Test\Tcds\Io\Orm\Fixtures\Address;
-use Test\Tcds\Io\Orm\Fixtures\AddressRepository;
+use Test\Tcds\Io\Orm\Fixtures\AddressTable;
 
-class RepositoryLoadByTest extends TestCase
+class TableLoadByQueryTest extends TestCase
 {
     private Connection&MockObject $connection;
     private PDOStatement&MockObject $statement;
-    private AddressRepository $repository;
+    private AddressTable $table;
 
     protected function setUp(): void
     {
         $this->connection = $this->createMock(Connection::class);
         $this->statement = $this->createMock(PDOStatement::class);
-        $this->repository = new AddressRepository($this->connection);
+        $this->table = new AddressTable($this->connection);
     }
 
-    public function testGivenWhereWhenNotEmptyWhenRunQueryWithWhereAndLimitAndReturnOnlyOneEntry(): void
+    public function testGivenASqlQueryAndItsBindingsThenBypassTheQueryToTheConnectionAndReturnTheFirstItem(): void
     {
         $this->statement
             ->method('fetch')
             ->willReturn(['id' => 'address-xxx', 'street' => "Galaxy Avenue"]);
         $this->connection
             ->expects($this->once())
-            ->method('execute')
-            ->with(
-                "SELECT * FROM addresses WHERE id = :id LIMIT 1",
-                [':id' => 'address-xxx'],
-            )
+            ->method('read')
+            ->with("select * from addresses where id LIKE :id", [':id' => 'address-xxx'])
             ->willReturn($this->statement);
 
-        $result = $this->repository->loadBy(['id' => 'address-xxx']);
+        $result = $this->table->loadByQuery("select * from addresses where id LIKE :id", [':id' => 'address-xxx']);
 
         $this->assertEquals(new Address(id: 'address-xxx', street: "Galaxy Avenue"), $result);
     }

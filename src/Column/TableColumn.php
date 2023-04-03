@@ -6,7 +6,7 @@ namespace Tcds\Io\Orm\Column;
 
 use Closure;
 
-trait ColumnFactory
+trait TableColumn
 {
     protected function column(string $name, Closure $value): Column
     {

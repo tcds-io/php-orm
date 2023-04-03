@@ -12,9 +12,10 @@ class MysqlConnectionTest extends TestCase
 {
     public function testGivenPdoThenConfigurePdoWithMysqlInitCommand(): void
     {
-        $pdo = $this->createMock(PDO::class);
+        $read = $this->createMock(PDO::class);
+        $write = $this->createMock(PDO::class);
 
-        $pdo->expects($this->exactly(3))
+        $read->expects($this->exactly(3))
             ->method('setAttribute')
             ->withConsecutive(
                 [PDO::MYSQL_ATTR_INIT_COMMAND, 'SET NAMES utf8'],
@@ -22,6 +23,14 @@ class MysqlConnectionTest extends TestCase
                 [PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC],
             );
 
-        new MysqlConnection($pdo);
+        $write->expects($this->exactly(3))
+            ->method('setAttribute')
+            ->withConsecutive(
+                [PDO::MYSQL_ATTR_INIT_COMMAND, 'SET NAMES utf8'],
+                [PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION],
+                [PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC],
+            );
+
+        new MysqlConnection($read, $write);
     }
 }

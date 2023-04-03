@@ -13,31 +13,39 @@ use Tcds\Io\Orm\Connection\Pdo\GenericConnection;
 
 class GenericConnectionTest extends TestCase
 {
-    private PDO&MockObject $pdo;
+    private PDO&MockObject $read;
+    private PDO&MockObject $write;
     private PDOStatement&MockObject $statement;
 
     private GenericConnection $connection;
 
     protected function setUp(): void
     {
-        $this->pdo = $this->createMock(PDO::class);
+        $this->read = $this->createMock(PDO::class);
+        $this->write = $this->createMock(PDO::class);
         $this->statement = $this->createMock(PDOStatement::class);
 
-        $this->connection = new GenericConnection($this->pdo);
+        $this->connection = new GenericConnection($this->read, $this->write);
     }
 
     public function testGivenPdoThenConfigurePdo(): void
     {
-        $pdo = $this->createMock(PDO::class);
-
-        $pdo->expects($this->exactly(2))
+        $this->read
+            ->expects($this->exactly(2))
+            ->method('setAttribute')
+            ->withConsecutive(
+                [PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION],
+                [PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC],
+            );
+        $this->write
+            ->expects($this->exactly(2))
             ->method('setAttribute')
             ->withConsecutive(
                 [PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION],
                 [PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC],
             );
 
-        new GenericConnection($pdo);
+        new GenericConnection($this->read, $this->write);
     }
 
     public function testGivenTheQueryAndItsParamsWhenExecuteIsCalledThenRunPrepareAndExecuteInPdo(): void
@@ -45,7 +53,7 @@ class GenericConnectionTest extends TestCase
         $query = 'SELECT * FROM addresses WHERE id = :id';
         $params = [':id' => 'address-xxx'];
 
-        $this->pdo
+        $this->read
             ->expects($this->once())
             ->method('prepare')
             ->with($query)
@@ -55,24 +63,29 @@ class GenericConnectionTest extends TestCase
             ->method('execute')
             ->with($params);
 
-        $this->connection->execute($query, $params);
+        $this->connection->read($query, $params);
     }
 
     public function testGivenStatementWhenExecIsCalledThenRunExecInPdo(): void
     {
-        $statement = 'DELETE FROM addresses WHERE id IS NULL';
+        $deleteStatement = 'DELETE FROM addresses WHERE id IS NULL';
 
-        $this->pdo
+        $this->write
             ->expects($this->once())
-            ->method('exec')
-            ->with($statement);
+            ->method('prepare')
+            ->with($deleteStatement)
+            ->willReturn($this->statement);
+        $this->statement
+            ->expects($this->once())
+            ->method('execute')
+            ->with([]);
 
-        $this->connection->exec($statement);
+        $this->connection->write($deleteStatement);
     }
 
     public function testBeginPdoTransaction(): void
     {
-        $this->pdo
+        $this->write
             ->expects($this->once())
             ->method('beginTransaction');
 
@@ -81,7 +94,7 @@ class GenericConnectionTest extends TestCase
 
     public function testCommitPdoTransaction(): void
     {
-        $this->pdo
+        $this->write
             ->expects($this->once())
             ->method('commit');
 
@@ -90,7 +103,7 @@ class GenericConnectionTest extends TestCase
 
     public function testRollbackPdoTransaction(): void
     {
-        $this->pdo
+        $this->write
             ->expects($this->once())
             ->method('rollBack');
 
@@ -99,10 +112,10 @@ class GenericConnectionTest extends TestCase
 
     public function testWhenTransactionFailsThenRollback(): void
     {
-        $this->pdo->expects($this->once())->method('beginTransaction');
-        $this->pdo->expects($this->once())->method('rollBack');
+        $this->write->expects($this->once())->method('beginTransaction');
+        $this->write->expects($this->once())->method('rollBack');
 
-        $this->pdo->expects($this->never())->method('commit');
+        $this->write->expects($this->never())->method('commit');
 
         $this->expectException(Exception::class);
         $this->connection->transaction(fn() => throw new Exception("Error"));
@@ -110,10 +123,10 @@ class GenericConnectionTest extends TestCase
 
     public function testWhenTransactionSucceedThenCommitAndReturnCallbackResponse(): void
     {
-        $this->pdo->expects($this->once())->method('beginTransaction');
-        $this->pdo->expects($this->once())->method('commit');
+        $this->write->expects($this->once())->method('beginTransaction');
+        $this->write->expects($this->once())->method('commit');
 
-        $this->pdo->expects($this->never())->method('rollBack');
+        $this->write->expects($this->never())->method('rollBack');
 
         $response = $this->connection->transaction(fn() => "success");
 

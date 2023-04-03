@@ -4,20 +4,16 @@ declare(strict_types=1);
 
 namespace Test\Tcds\Io\Orm\Fixtures;
 
-use Tcds\Io\Orm\Column\Column;
 use Tcds\Io\Orm\Connection\Connection;
-use Tcds\Io\Orm\Repository;
+use Tcds\Io\Orm\EntityTable;
 
-final class AddressRepository extends Repository
+final class AddressEntityTable extends EntityTable
 {
-    protected Column $id;
-
     public function __construct(Connection $connection)
     {
-        $this->column("id", fn(Address $entity) => $entity->id);
-        $this->column("street", fn(Address $entity) => $entity->street);
+        $this->column('street', fn(Address $entity) => $entity->street);
 
-        parent::__construct($connection);
+        parent::__construct($this->column('id', fn(Address $entity) => $entity->id), $connection);
     }
 
     public function name(): string

@@ -12,20 +12,21 @@ use Tcds\Io\Orm\Connection\Pdo\NestedTransactionConnection;
 
 class NestedTransactionConnectionTest extends TestCase
 {
-    private PDO&MockObject $pdo;
+    private PDO&MockObject $write;
 
     private NestedTransactionConnection $connection;
 
     protected function setUp(): void
     {
-        $this->pdo = $this->createMock(PDO::class);
+        $read = $this->createMock(PDO::class);
+        $this->write = $this->createMock(PDO::class);
 
-        $this->connection = new NestedTransactionConnection($this->pdo);
+        $this->connection = new NestedTransactionConnection($read, $this->write);
     }
 
     public function testWhenBeginThenCommitGetsCalledThenRunBeginAndCommitStatements(): void
     {
-        $this->pdo->expects($this->exactly(2))->method('exec')
+        $this->write->expects($this->exactly(2))->method('exec')
             ->withConsecutive(
                 ['BEGIN'],
                 ['COMMIT'],
@@ -37,7 +38,7 @@ class NestedTransactionConnectionTest extends TestCase
 
     public function testWhenBeginAndCommitGetsCalledMultipleTimesThenRunStoreAndReleaseSavepoint(): void
     {
-        $this->pdo->expects($this->exactly(6))->method('exec')
+        $this->write->expects($this->exactly(6))->method('exec')
             ->withConsecutive(
                 ['BEGIN'],
                 ['SAVEPOINT LEVEL1'],
@@ -57,7 +58,7 @@ class NestedTransactionConnectionTest extends TestCase
 
     public function testWhenBeginThenRollbackGetsCalledThenRunBeginAndRollbackStatements(): void
     {
-        $this->pdo->expects($this->exactly(2))->method('exec')
+        $this->write->expects($this->exactly(2))->method('exec')
             ->withConsecutive(
                 ['BEGIN'],
                 ['ROLLBACK'],
@@ -69,7 +70,7 @@ class NestedTransactionConnectionTest extends TestCase
 
     public function testWhenBeginAndRollbackGetsCalledMultipleTimesThenRunStoreAndReleaseSavepoint(): void
     {
-        $this->pdo->expects($this->exactly(6))->method('exec')
+        $this->write->expects($this->exactly(6))->method('exec')
             ->withConsecutive(
                 ['BEGIN'],
                 ['SAVEPOINT LEVEL1'],

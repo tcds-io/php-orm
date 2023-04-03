@@ -11,45 +11,33 @@ use Throwable;
 
 class GenericConnection implements Connection
 {
-    protected PDO $pdo;
+    private PDO $read;
+    private PDO $write;
 
-    public function __construct(PDO $pdo)
+    public function __construct(PDO $read, PDO $write)
     {
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        $this->read = $read;
+        $this->read->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $this->read->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 
-        $this->pdo = $pdo;
-    }
-
-    /**
-     * @param array<string, string|int|float|bool|null> $params
-     */
-    public function execute(string $statement, array $params = []): PDOStatement
-    {
-        $stmt = $this->pdo->prepare($statement);
-        $stmt->execute($params);
-
-        return $stmt;
-    }
-
-    public function exec(string $statement): void
-    {
-        $this->pdo->exec($statement);
+        $this->write = $write;
+        $this->write->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $this->write->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
     }
 
     public function begin(): void
     {
-        $this->pdo->beginTransaction();
+        $this->write->beginTransaction();
     }
 
     public function commit(): void
     {
-        $this->pdo->commit();
+        $this->write->commit();
     }
 
     public function rollback(): void
     {
-        $this->pdo->rollBack();
+        $this->write->rollBack();
     }
 
     /**
@@ -69,5 +57,32 @@ class GenericConnection implements Connection
 
             throw $e;
         }
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function read(string $statement, array $params = []): PDOStatement
+    {
+        $stmt = $this->read->prepare($statement);
+        $stmt->execute($params);
+
+        return $stmt;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function write(string $statement, array $params = []): PDOStatement
+    {
+        $stmt = $this->write->prepare($statement);
+        $stmt->execute($params);
+
+        return $stmt;
+    }
+
+    protected function exec(string $statement): void
+    {
+        $this->write->exec($statement);
     }
 }

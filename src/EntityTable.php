@@ -10,9 +10,9 @@ use Throwable;
 
 /**
  * @template T of object
- * @extends Repository<T>
+ * @extends Table<T>
  */
-abstract class EntityRepository extends Repository
+abstract class EntityTable extends Table
 {
     private Column $primaryKey;
 
@@ -35,16 +35,6 @@ abstract class EntityRepository extends Repository
     /**
      * @param T ...$entities
      */
-    public function delete(object ...$entities): void
-    {
-        foreach ($entities as $entity) {
-            $this->deleteWhere(['id' => ($this->primaryKey->value)($entity)]);
-        }
-    }
-
-    /**
-     * @param T ...$entities
-     */
     public function update(object ...$entities): void
     {
         foreach ($entities as $entity) {
@@ -56,6 +46,16 @@ abstract class EntityRepository extends Repository
                 ),
                 ['id' => ($this->primaryKey->value)($entity)],
             );
+        }
+    }
+
+    /**
+     * @param T ...$entities
+     */
+    public function delete(object ...$entities): void
+    {
+        foreach ($entities as $entity) {
+            $this->deleteWhere(['id' => ($this->primaryKey->value)($entity)]);
         }
     }
 }

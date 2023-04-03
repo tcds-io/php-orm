@@ -6,7 +6,7 @@ namespace Tcds\Io\Orm;
 
 use PDO;
 use Tcds\Io\Orm\Column\Column;
-use Tcds\Io\Orm\Column\ColumnFactory;
+use Tcds\Io\Orm\Column\TableColumn;
 use Tcds\Io\Orm\Connection\Connection;
 use Throwable;
 use Traversable;
@@ -14,9 +14,9 @@ use Traversable;
 /**
  * @template T of object
  */
-abstract class Repository
+abstract class Table
 {
-    use ColumnFactory;
+    use TableColumn;
 
     /** @var array<Column> */
     protected array $columns = [];
@@ -51,7 +51,7 @@ abstract class Repository
             [],
         );
 
-        $this->connection->execute($sql, $values);
+        $this->connection->write($sql, $values);
     }
 
     /**
@@ -63,7 +63,7 @@ abstract class Repository
     {
         [$whereColumnsString, $whereBindings] = $this->prepareWhere($where);
         $sql = trim("SELECT * FROM {$this->name()}$whereColumnsString LIMIT 1");
-        $items = $this->connection->execute($sql, $whereBindings);
+        $items = $this->connection->read($sql, $whereBindings);
 
         /** @var array<string, string|int|bool|float|null> $item */
         $item = $items->fetch(PDO::FETCH_ASSOC);
@@ -78,7 +78,7 @@ abstract class Repository
      */
     public function loadByQuery(string $selectQuery, array $bindings): ?object
     {
-        $items = $this->connection->execute($selectQuery, $bindings);
+        $items = $this->connection->read($selectQuery, $bindings);
 
         /** @var array<string, string|int|bool|float|null> $item */
         $item = $items->fetch(PDO::FETCH_ASSOC);
@@ -95,7 +95,7 @@ abstract class Repository
         [$whereColumnsString, $whereBindings] = $this->prepareWhere($where);
         $limitOffset = $this->prepareLimitOffset($limit, $offset);
         $sql = trim("SELECT * FROM {$this->name()}{$whereColumnsString}{$limitOffset}");
-        $items = $this->connection->execute($sql, $whereBindings);
+        $items = $this->connection->read($sql, $whereBindings);
 
         while ($item = $items->fetch(PDO::FETCH_ASSOC)) {
             /** @var array<string, string|int|bool|float|null> $item */
@@ -109,7 +109,7 @@ abstract class Repository
      */
     public function findByQuery(string $selectQuery, array $bindings): Traversable
     {
-        $items = $this->connection->execute($selectQuery, $bindings);
+        $items = $this->connection->read($selectQuery, $bindings);
 
         while ($item = $items->fetch(PDO::FETCH_ASSOC)) {
             /** @var array<string, string|int|bool|float|null> $item */
@@ -125,7 +125,7 @@ abstract class Repository
         [$whereColumnsString, $whereBindings] = $this->prepareWhere($where);
         $sql = trim("DELETE FROM {$this->name()}$whereColumnsString");
 
-        $this->connection->execute($sql, $whereBindings);
+        $this->connection->write($sql, $whereBindings);
     }
 
     /**
@@ -157,7 +157,7 @@ abstract class Repository
         [$whereColumnsString, $whereBindings] = $this->prepareWhere($where);
         $sql = trim("UPDATE {$this->name()} SET {$columnBindingsString}{$whereColumnsString}");
 
-        $this->connection->execute($sql, array_merge($valuesBinding, $whereBindings));
+        $this->connection->write($sql, array_merge($valuesBinding, $whereBindings));
     }
 
     private function columnNames(): string

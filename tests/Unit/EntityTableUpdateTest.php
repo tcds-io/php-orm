@@ -8,17 +8,17 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Tcds\Io\Orm\Connection\Connection;
 use Test\Tcds\Io\Orm\Fixtures\Address;
-use Test\Tcds\Io\Orm\Fixtures\AddressEntityRepository;
+use Test\Tcds\Io\Orm\Fixtures\AddressEntityTable;
 
-class EntityRepositoryDeleteTest extends TestCase
+class EntityTableUpdateTest extends TestCase
 {
     private Connection&MockObject $connection;
-    private AddressEntityRepository $repository;
+    private AddressEntityTable $table;
 
     protected function setUp(): void
     {
         $this->connection = $this->createMock(Connection::class);
-        $this->repository = new AddressEntityRepository($this->connection);
+        $this->table = new AddressEntityTable($this->connection);
     }
 
     public function testGivenWhereWhenNotEmptyWhenRunQueryWithWhereAndLimitAndReturnOnlyOneEntry(): void
@@ -27,9 +27,12 @@ class EntityRepositoryDeleteTest extends TestCase
 
         $this->connection
             ->expects($this->once())
-            ->method('execute')
-            ->with("DELETE FROM addresses WHERE id = :id", [':id' => 'address-xxx']);
+            ->method('write')
+            ->with(
+                "UPDATE addresses SET street = :street, id = :id WHERE id = :id",
+                [':street' => 'Galaxy Avenue', ':id' => 'address-xxx'],
+            );
 
-        $this->repository->delete($address);
+        $this->table->update($address);
     }
 }

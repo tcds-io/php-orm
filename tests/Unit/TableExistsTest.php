@@ -8,19 +8,19 @@ use PDOStatement;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Tcds\Io\Orm\Connection\Connection;
-use Test\Tcds\Io\Orm\Fixtures\AddressRepository;
+use Test\Tcds\Io\Orm\Fixtures\AddressTable;
 
-class RepositoryExistsTest extends TestCase
+class TableExistsTest extends TestCase
 {
     private Connection&MockObject $connection;
     private PDOStatement&MockObject $statement;
-    private AddressRepository $repository;
+    private AddressTable $table;
 
     protected function setUp(): void
     {
         $this->connection = $this->createMock(Connection::class);
         $this->statement = $this->createMock(PDOStatement::class);
-        $this->repository = new AddressRepository($this->connection);
+        $this->table = new AddressTable($this->connection);
     }
 
     public function testGivenTheConditionsWhenSelectReturnsAnEntryThenExistIsTrue(): void
@@ -30,11 +30,11 @@ class RepositoryExistsTest extends TestCase
             ->willReturn(['id' => 'address-xxx', 'street' => "Galaxy Avenue"]);
         $this->connection
             ->expects($this->once())
-            ->method('execute')
+            ->method('read')
             ->with("SELECT * FROM addresses WHERE id = :id LIMIT 1", [':id' => 'address-xxx'])
             ->willReturn($this->statement);
 
-        $exists = $this->repository->exists(['id' => 'address-xxx']);
+        $exists = $this->table->exists(['id' => 'address-xxx']);
 
         $this->assertTrue($exists);
     }
@@ -46,11 +46,11 @@ class RepositoryExistsTest extends TestCase
             ->willReturn(null);
         $this->connection
             ->expects($this->once())
-            ->method('execute')
+            ->method('read')
             ->with("SELECT * FROM addresses WHERE id = :id LIMIT 1", [':id' => 'address-xxx'])
             ->willReturn($this->statement);
 
-        $exists = $this->repository->exists(['id' => 'address-xxx']);
+        $exists = $this->table->exists(['id' => 'address-xxx']);
 
         $this->assertFalse($exists);
     }
