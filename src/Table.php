@@ -40,16 +40,9 @@ abstract class Table
      */
     public function insert(object $entry): void
     {
-        $sql = <<<SQL
-            INSERT INTO {$this->name()} ({$this->columnNames()})
-                VALUES ({$this->columnBindings()})
-        SQL;
+        $sql = "INSERT INTO {$this->name()} ({$this->columnNames()}) VALUES ({$this->columnBindings()})";
 
-        $values = array_reduce(
-            $this->columns,
-            fn($current, Column $column) => array_merge($current, [":$column->name" => ($column->value)($entry)]),
-            [],
-        );
+        $values = $this->valuesOf($entry);
 
         $this->connection->write($sql, $values);
     }
@@ -158,6 +151,19 @@ abstract class Table
         $sql = trim("UPDATE {$this->name()} SET {$columnBindingsString}{$whereColumnsString}");
 
         $this->connection->write($sql, array_merge($valuesBinding, $whereBindings));
+    }
+
+    /**
+     * @param T $entry
+     * @return array<string, string|int|float|bool|null>
+     */
+    public function valuesOf(object $entry): array
+    {
+        return array_reduce(
+            $this->columns,
+            fn($current, Column $column) => array_merge($current, ["$column->name" => ($column->value)($entry)]),
+            [],
+        );
     }
 
     private function columnNames(): string

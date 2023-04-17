@@ -29,11 +29,8 @@ class TableInsertTest extends TestCase
             ->expects($this->once())
             ->method('write')
             ->with(
-                <<<SQL
-                    INSERT INTO addresses (id, street)
-                        VALUES (:id, :street)
-                SQL,
-                [':id' => 'address-xxx', ':street' => "Galaxy Avenue"],
+                "INSERT INTO addresses (id, street) VALUES (:id, :street)",
+                ['id' => 'address-xxx', 'street' => "Galaxy Avenue"],
             );
 
         $this->table->insert($address);
