@@ -8,8 +8,9 @@ use Exception;
 use PDO;
 use PDOStatement;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
+use Tcds\Io\Orm\Connection\ConnectionDriver;
 use Tcds\Io\Orm\Connection\Pdo\GenericConnection;
+use Test\Tcds\Io\Orm\TestCase;
 
 class GenericConnectionTest extends TestCase
 {
@@ -25,27 +26,27 @@ class GenericConnectionTest extends TestCase
         $this->write = $this->createMock(PDO::class);
         $this->statement = $this->createMock(PDOStatement::class);
 
-        $this->connection = new GenericConnection($this->read, $this->write);
+        $this->connection = new class ($this->read, $this->write) extends GenericConnection
+        {
+            public function driver(): ConnectionDriver
+            {
+                return ConnectionDriver::GENERIC;
+            }
+        };
     }
 
     public function testGivenPdoThenConfigurePdo(): void
     {
-        $this->read
-            ->expects($this->exactly(2))
-            ->method('setAttribute')
-            ->withConsecutive(
-                [PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION],
-                [PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC],
-            );
-        $this->write
-            ->expects($this->exactly(2))
-            ->method('setAttribute')
-            ->withConsecutive(
-                [PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION],
-                [PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC],
-            );
+        $this->expectToSetupPdo($this->read);
+        $this->expectToSetupPdo($this->write);
 
-        new GenericConnection($this->read, $this->write);
+        new class ($this->read, $this->write) extends GenericConnection
+        {
+            public function driver(): ConnectionDriver
+            {
+                return ConnectionDriver::GENERIC;
+            }
+        };
     }
 
     public function testGivenTheQueryAndItsParamsWhenExecuteIsCalledThenRunPrepareAndExecuteInPdo(): void
@@ -131,5 +132,19 @@ class GenericConnectionTest extends TestCase
         $response = $this->connection->transaction(fn() => "success");
 
         $this->assertEquals("success", $response);
+    }
+
+    private function expectToSetupPdo(PDO&MockObject $pdo): void
+    {
+        $matcher = $this->exactly(2);
+
+        $pdo
+            ->expects($matcher)
+            ->method('setAttribute')
+            ->with($this->consecutive(
+                matcher: $matcher,
+                first: [PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION],
+                second: [PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC],
+            ));
     }
 }

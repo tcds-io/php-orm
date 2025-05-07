@@ -2,23 +2,23 @@
 
 declare(strict_types=1);
 
-namespace Test\Tcds\Io\Orm\Unit;
+namespace Test\Tcds\Io\Orm\Unit\Old;
 
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Tcds\Io\Orm\Connection\Connection;
 use Test\Tcds\Io\Orm\Fixtures\Address;
-use Test\Tcds\Io\Orm\Fixtures\AddressEntityTable;
+use Test\Tcds\Io\Orm\Fixtures\AddressEntityRecordMapper;
 
-class EntityTableUpdateTest extends TestCase
+class EntityTableMapperDeleteTest extends TestCase
 {
     private Connection&MockObject $connection;
-    private AddressEntityTable $table;
+    private AddressEntityRecordMapper $table;
 
     protected function setUp(): void
     {
         $this->connection = $this->createMock(Connection::class);
-        $this->table = new AddressEntityTable($this->connection);
+        $this->table = new AddressEntityRecordMapper($this->connection);
     }
 
     public function testGivenWhereWhenNotEmptyWhenRunQueryWithWhereAndLimitAndReturnOnlyOneEntry(): void
@@ -28,11 +28,8 @@ class EntityTableUpdateTest extends TestCase
         $this->connection
             ->expects($this->once())
             ->method('write')
-            ->with(
-                "UPDATE addresses SET street = :street, id = :id WHERE id = :id",
-                [':street' => 'Galaxy Avenue', ':id' => 'address-xxx'],
-            );
+            ->with("DELETE FROM addresses WHERE id = :id", [':id' => 'address-xxx']);
 
-        $this->table->update($address);
+        $this->table->delete($address);
     }
 }

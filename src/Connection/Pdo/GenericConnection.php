@@ -9,7 +9,7 @@ use PDOStatement;
 use Tcds\Io\Orm\Connection\Connection;
 use Throwable;
 
-class GenericConnection implements Connection
+abstract class GenericConnection implements Connection
 {
     private PDO $read;
     private PDO $write;

@@ -2,29 +2,29 @@
 
 declare(strict_types=1);
 
-namespace Test\Tcds\Io\Orm\Unit;
+namespace Test\Tcds\Io\Orm\Unit\Old;
 
 use PDOStatement;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Tcds\Io\Orm\Connection\Connection;
 use Test\Tcds\Io\Orm\Fixtures\Address;
-use Test\Tcds\Io\Orm\Fixtures\AddressTable;
+use Test\Tcds\Io\Orm\Fixtures\AddressRecordMapper;
 
-class TableLoadByTest extends TestCase
+class TableMapperLoadByQueryTest extends TestCase
 {
     private Connection&MockObject $connection;
     private PDOStatement&MockObject $statement;
-    private AddressTable $table;
+    private AddressRecordMapper $table;
 
     protected function setUp(): void
     {
         $this->connection = $this->createMock(Connection::class);
         $this->statement = $this->createMock(PDOStatement::class);
-        $this->table = new AddressTable($this->connection);
+        $this->table = new AddressRecordMapper($this->connection);
     }
 
-    public function testGivenWhereWhenNotEmptyWhenRunQueryWithWhereAndLimitAndReturnOnlyOneEntry(): void
+    public function testGivenASqlQueryAndItsBindingsThenBypassTheQueryToTheConnectionAndReturnTheFirstItem(): void
     {
         $this->statement
             ->method('fetch')
@@ -32,13 +32,10 @@ class TableLoadByTest extends TestCase
         $this->connection
             ->expects($this->once())
             ->method('read')
-            ->with(
-                "SELECT * FROM addresses WHERE id = :id LIMIT 1",
-                [':id' => 'address-xxx'],
-            )
+            ->with("select * from addresses where id LIKE :id", [':id' => 'address-xxx'])
             ->willReturn($this->statement);
 
-        $result = $this->table->loadBy(['id' => 'address-xxx']);
+        $result = $this->table->loadByQuery("select * from addresses where id LIKE :id", [':id' => 'address-xxx']);
 
         $this->assertEquals(new Address(id: 'address-xxx', street: "Galaxy Avenue"), $result);
     }

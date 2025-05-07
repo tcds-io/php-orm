@@ -6,9 +6,9 @@ namespace Tcds\Io\Orm\Connection\Pdo;
 
 use PDOException;
 
-class NestedTransactionConnection extends GenericConnection
+abstract class NestedTransactionConnection extends GenericConnection
 {
-    private const INITIAL_DEPTH = 0;
+    private const int INITIAL_DEPTH = 0;
 
     private int $transactionDepth = self::INITIAL_DEPTH;
 

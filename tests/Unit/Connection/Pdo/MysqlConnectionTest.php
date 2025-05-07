@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace Test\Tcds\Io\Orm\Unit\Connection\Pdo;
 
 use PDO;
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\MockObject\MockObject;
 use Tcds\Io\Orm\Connection\Pdo\MysqlConnection;
+use Test\Tcds\Io\Orm\TestCase;
 
 class MysqlConnectionTest extends TestCase
 {
@@ -15,22 +16,24 @@ class MysqlConnectionTest extends TestCase
         $read = $this->createMock(PDO::class);
         $write = $this->createMock(PDO::class);
 
-        $read->expects($this->exactly(3))
-            ->method('setAttribute')
-            ->withConsecutive(
-                [PDO::MYSQL_ATTR_INIT_COMMAND, 'SET NAMES utf8'],
-                [PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION],
-                [PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC],
-            );
-
-        $write->expects($this->exactly(3))
-            ->method('setAttribute')
-            ->withConsecutive(
-                [PDO::MYSQL_ATTR_INIT_COMMAND, 'SET NAMES utf8'],
-                [PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION],
-                [PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC],
-            );
+        $this->expectToSetupPdo($read);
+        $this->expectToSetupPdo($write);
 
         new MysqlConnection($read, $write);
+    }
+
+    private function expectToSetupPdo(PDO&MockObject $pdo): void
+    {
+        $matcher = $this->exactly(3);
+
+        $pdo
+            ->expects($matcher)
+            ->method('setAttribute')
+            ->with($this->consecutive(
+                matcher: $matcher,
+                first: [PDO::MYSQL_ATTR_INIT_COMMAND, 'SET NAMES utf8'],
+                second: [PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION],
+                third: [PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC],
+            ));
     }
 }
