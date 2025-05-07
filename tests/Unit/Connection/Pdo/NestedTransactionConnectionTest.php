@@ -7,8 +7,9 @@ namespace Test\Tcds\Io\Orm\Unit\Connection\Pdo;
 use PDO;
 use PDOException;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
+use Tcds\Io\Orm\Connection\ConnectionDriver;
 use Tcds\Io\Orm\Connection\Pdo\NestedTransactionConnection;
+use Test\Tcds\Io\Orm\TestCase;
 
 class NestedTransactionConnectionTest extends TestCase
 {
@@ -21,16 +22,22 @@ class NestedTransactionConnectionTest extends TestCase
         $read = $this->createMock(PDO::class);
         $this->write = $this->createMock(PDO::class);
 
-        $this->connection = new NestedTransactionConnection($read, $this->write);
+        $this->connection = new class ($read, $this->write) extends NestedTransactionConnection
+        {
+            public function driver(): ConnectionDriver
+            {
+                return ConnectionDriver::GENERIC;
+            }
+        };
     }
 
     public function testWhenBeginThenCommitGetsCalledThenRunBeginAndCommitStatements(): void
     {
-        $this->write->expects($this->exactly(2))->method('exec')
-            ->withConsecutive(
-                ['BEGIN'],
-                ['COMMIT'],
-            );
+        $this->expectToSetupPdo(
+            $this->write,
+            ['BEGIN'],
+            ['COMMIT'],
+        );
 
         $this->connection->begin();
         $this->connection->commit();
@@ -38,15 +45,15 @@ class NestedTransactionConnectionTest extends TestCase
 
     public function testWhenBeginAndCommitGetsCalledMultipleTimesThenRunStoreAndReleaseSavepoint(): void
     {
-        $this->write->expects($this->exactly(6))->method('exec')
-            ->withConsecutive(
-                ['BEGIN'],
-                ['SAVEPOINT LEVEL1'],
-                ['SAVEPOINT LEVEL2'],
-                ['RELEASE SAVEPOINT LEVEL2'],
-                ['RELEASE SAVEPOINT LEVEL1'],
-                ['COMMIT'],
-            );
+        $this->expectToSetupPdo(
+            $this->write,
+            ['BEGIN'],
+            ['SAVEPOINT LEVEL1'],
+            ['SAVEPOINT LEVEL2'],
+            ['RELEASE SAVEPOINT LEVEL2'],
+            ['RELEASE SAVEPOINT LEVEL1'],
+            ['COMMIT'],
+        );
 
         $this->connection->begin();
         $this->connection->begin();
@@ -58,11 +65,11 @@ class NestedTransactionConnectionTest extends TestCase
 
     public function testWhenBeginThenRollbackGetsCalledThenRunBeginAndRollbackStatements(): void
     {
-        $this->write->expects($this->exactly(2))->method('exec')
-            ->withConsecutive(
-                ['BEGIN'],
-                ['ROLLBACK'],
-            );
+        $this->expectToSetupPdo(
+            $this->write,
+            ['BEGIN'],
+            ['ROLLBACK'],
+        );
 
         $this->connection->begin();
         $this->connection->rollback();
@@ -70,15 +77,15 @@ class NestedTransactionConnectionTest extends TestCase
 
     public function testWhenBeginAndRollbackGetsCalledMultipleTimesThenRunStoreAndReleaseSavepoint(): void
     {
-        $this->write->expects($this->exactly(6))->method('exec')
-            ->withConsecutive(
-                ['BEGIN'],
-                ['SAVEPOINT LEVEL1'],
-                ['SAVEPOINT LEVEL2'],
-                ['RELEASE SAVEPOINT LEVEL2'],
-                ['RELEASE SAVEPOINT LEVEL1'],
-                ['ROLLBACK'],
-            );
+        $this->expectToSetupPdo(
+            $this->write,
+            ['BEGIN'],
+            ['SAVEPOINT LEVEL1'],
+            ['SAVEPOINT LEVEL2'],
+            ['RELEASE SAVEPOINT LEVEL2'],
+            ['RELEASE SAVEPOINT LEVEL1'],
+            ['ROLLBACK'],
+        );
 
         $this->connection->begin();
         $this->connection->begin();
@@ -94,5 +101,18 @@ class NestedTransactionConnectionTest extends TestCase
         $this->expectExceptionMessage('Rollback error: There is no transaction started');
 
         $this->connection->rollback();
+    }
+
+    /**
+     * @param array<mixed> ...$params
+     */
+    private function expectToSetupPdo(PDO&MockObject $pdo, array ...$params): void
+    {
+        $matcher = $this->exactly(count($params));
+
+        $pdo
+            ->expects($matcher)
+            ->method('exec')
+            ->with($this->consecutive($matcher, ...$params));
     }
 }

@@ -2,25 +2,25 @@
 
 declare(strict_types=1);
 
-namespace Test\Tcds\Io\Orm\Unit;
+namespace Test\Tcds\Io\Orm\Unit\Old;
 
 use PDOStatement;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Tcds\Io\Orm\Connection\Connection;
-use Test\Tcds\Io\Orm\Fixtures\AddressTable;
+use Test\Tcds\Io\Orm\Fixtures\AddressRecordMapper;
 
-class TableExistsTest extends TestCase
+class TableMapperExistsTest extends TestCase
 {
     private Connection&MockObject $connection;
     private PDOStatement&MockObject $statement;
-    private AddressTable $table;
+    private AddressRecordMapper $table;
 
     protected function setUp(): void
     {
         $this->connection = $this->createMock(Connection::class);
         $this->statement = $this->createMock(PDOStatement::class);
-        $this->table = new AddressTable($this->connection);
+        $this->table = new AddressRecordMapper($this->connection);
     }
 
     public function testGivenTheConditionsWhenSelectReturnsAnEntryThenExistIsTrue(): void

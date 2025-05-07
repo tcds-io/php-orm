@@ -6,14 +6,27 @@ namespace Tcds\Io\Orm\Column;
 
 use Closure;
 
-abstract class Column
+/**
+ * @template Entry of object
+ * @template Type
+ */
+abstract readonly class Column
 {
-    public readonly string $name;
-    public readonly Closure $value;
+    /**
+     * @param Closure(Entry $record): Type $value
+     */
+    public function __construct(
+        public string $name,
+        public Closure $value,
+    ) {
+    }
 
-    public function __construct(string $name, Closure $value)
+    /**
+     * @param Entry $entry
+     * @return Type
+     */
+    public function valueOn($entry)
     {
-        $this->name = $name;
-        $this->value = $value;
+        return ($this->value)($entry);
     }
 }
