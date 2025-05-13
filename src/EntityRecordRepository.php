@@ -7,8 +7,8 @@ namespace Tcds\Io\Orm;
 use Tcds\Io\Orm\Connection\Connection;
 
 /**
- * @template T of object
- * @template FK of int|string
+ * @template T
+ * @template FK
  * @extends RecordMapper<T>
  * @internal
  */
@@ -18,41 +18,58 @@ abstract class EntityRecordRepository extends RecordRepository
      * @param EntityRecordMapper<T> $entityMapper
      */
     public function __construct(
-        Connection $connection,
         protected EntityRecordMapper $entityMapper,
+        Connection $connection,
+        string $table,
     ) {
-        parent::__construct($connection, $entityMapper);
+        parent::__construct($entityMapper, $connection, $table);
     }
 
     /**
      * @param FK $id
      * @return T|null
      */
-    public function loadById($id)
+    public function selectEntityById($id)
     {
-        return $this->loadBy(['id' => $id]);
+        return $this->selectOneWhere(['id' => $id]);
+    }
+
+    /**
+     * @param T $entity
+     */
+    public function updateOne($entity): void
+    {
+        $this->updateWhere(
+            $this->mapper->plain($entity),
+            ['id' => $this->entityMapper->primaryKey->plain($entity)],
+        );
     }
 
     /**
      * @param T ...$entities
      */
-    public function update(...$entities): void
+    public function updateMany(...$entities): void
     {
         foreach ($entities as $entity) {
-            $this->updateWhere(
-                $this->mapper->values($entity),
-                ['id' => $this->entityMapper->primaryKey->valueOn($entity)],
-            );
+            $this->updateOne($entity);
         }
     }
 
     /**
+     * @param T $entity
+     */
+    public function deleteOne($entity): void
+    {
+        $this->deleteWhere(['id' => $this->entityMapper->primaryKey->plain($entity)]);
+    }
+
+    /**
      * @param T ...$entities
      */
-    public function delete(...$entities): void
+    public function deleteMany(...$entities): void
     {
         foreach ($entities as $entity) {
-            $this->deleteWhere(['id' => $this->entityMapper->primaryKey->valueOn($entity)]);
+            $this->deleteOne($entity);
         }
     }
 }

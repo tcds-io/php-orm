@@ -10,10 +10,10 @@ use PHPUnit\Framework\MockObject\MockObject;
 use Tcds\Io\Orm\Connection\Connection;
 use Tcds\Io\Orm\RecordRepository;
 use Test\Tcds\Io\Orm\Fixtures\Address;
-use Test\Tcds\Io\Orm\Fixtures\AddressEntityRecordMapper;
+use Test\Tcds\Io\Orm\Fixtures\AddressMapper;
 use Test\Tcds\Io\Orm\TestCase;
 
-class RecordManagerTest extends TestCase
+class RecordRepositoryTest extends TestCase
 {
     private Connection&MockObject $connection;
     private PDOStatement&MockObject $statement;
@@ -24,13 +24,8 @@ class RecordManagerTest extends TestCase
         $this->connection = $this->createMock(Connection::class);
         $this->statement = $this->createMock(PDOStatement::class);
 
-        $this->manager = new class (new AddressEntityRecordMapper(), $this->connection) extends RecordRepository
+        $this->manager = new class (new AddressMapper(), $this->connection, 'addresses') extends RecordRepository
         {
-            protected string $table {
-                get {
-                    return 'record_table';
-                }
-            }
         };
     }
 
@@ -42,17 +37,20 @@ class RecordManagerTest extends TestCase
             ->expects($this->once())
             ->method('write')
             ->with(
-                "INSERT INTO addresses (id, street, number, floor, active) VALUES (:id, :street, :number, :floor, :active)",
+                "INSERT INTO addresses (id, street, number, floor, active, type, created_at, deleted_at) VALUES (:id, :street, :number, :floor, :active, :type, :created_at, :deleted_at)",
                 [
-                    'id' => 'address-1',
+                    'id' => 1,
                     'street' => 'First Avenue',
                     'number' => 145.45,
                     'floor' => 1,
                     'active' => true,
+                    'type' => 'RESIDENCE',
+                    'created_at' => '2025-05-01T10:15:20+00:00',
+                    'deleted_at' => '2025-05-10T11:16:30+00:00',
                 ],
             );
 
-        $this->manager->insert($address);
+        $this->manager->insertOne($address);
     }
 
     #[Test] public function load_by(): void
@@ -69,7 +67,7 @@ class RecordManagerTest extends TestCase
             )
             ->willReturn($this->statement);
 
-        $result = $this->manager->loadBy(['id' => 'address-xxx']);
+        $result = $this->manager->selectOneWhere(['id' => 'address-xxx']);
 
         $this->assertEquals(Address::second(), $result);
     }
@@ -85,7 +83,7 @@ class RecordManagerTest extends TestCase
             ->with("select * from addresses where id LIKE :id", [':id' => 'address-xxx'])
             ->willReturn($this->statement);
 
-        $result = $this->manager->loadByQuery("select * from addresses where id LIKE :id", [':id' => 'address-xxx']);
+        $result = $this->manager->selectOneByQuery("select * from addresses where id LIKE :id", [':id' => 'address-xxx']);
 
         $this->assertEquals(Address::first(), $result);
     }
@@ -109,7 +107,7 @@ class RecordManagerTest extends TestCase
             )
             ->willReturn($this->statement);
 
-        $result = $this->manager->listBy(
+        $result = $this->manager->selectManyWhere(
             ['id' => 'address-xxx', 'street' => 'Galaxy Avenue'],
             limit: 5,
             offset: 15,
@@ -129,8 +127,8 @@ class RecordManagerTest extends TestCase
         $this->statement
             ->method('fetch')
             ->willReturnOnConsecutiveCalls(
-                ['id' => 'address-xxx', 'street' => "Galaxy Avenue"],
-                ['id' => 'address-yyy', 'street' => "Galaxy Highway"],
+                Address::firstRowData(),
+                Address::secondRowData(),
                 null,
             );
 
@@ -140,12 +138,12 @@ class RecordManagerTest extends TestCase
             ->with("SELECT * FROM addresses", [])
             ->willReturn($this->statement);
 
-        $result = $this->manager->listBy();
+        $result = $this->manager->selectManyWhere();
 
         $this->assertEquals(
             [
-                new Address(id: 'address-xxx', street: "Galaxy Avenue"),
-                new Address(id: 'address-yyy', street: "Galaxy Highway"),
+                Address::first(),
+                Address::second(),
             ],
             iterator_to_array($result),
         );
@@ -167,7 +165,7 @@ class RecordManagerTest extends TestCase
             ->with("SELECT * FROM addresses WHERE foo = :foo", ['foo' => 'bar'])
             ->willReturn($this->statement);
 
-        $result = $this->manager->listByQuery('SELECT * FROM addresses WHERE foo = :foo', ['foo' => 'bar']);
+        $result = $this->manager->selectManyByQuery('SELECT * FROM addresses WHERE foo = :foo', ['foo' => 'bar']);
 
         $this->assertEquals(
             [
@@ -189,7 +187,7 @@ class RecordManagerTest extends TestCase
             ->with("SELECT * FROM addresses WHERE id = :id LIMIT 1", ['id' => 'address-xxx'])
             ->willReturn($this->statement);
 
-        $exists = $this->manager->exists(['id' => 'address-xxx']);
+        $exists = $this->manager->existsWhere(['id' => 'address-xxx']);
 
         $this->assertTrue($exists);
     }
@@ -205,7 +203,7 @@ class RecordManagerTest extends TestCase
             ->with("SELECT * FROM addresses WHERE id = :id LIMIT 1", ['id' => 'address-xxx'])
             ->willReturn($this->statement);
 
-        $exists = $this->manager->exists(['id' => 'address-xxx']);
+        $exists = $this->manager->existsWhere(['id' => 'address-xxx']);
 
         $this->assertFalse($exists);
     }
