@@ -20,6 +20,8 @@ composer require tcds-io/orm
 - Support for Records and Entities
 - Fine-grained control over columns (e.g. enums, dates, nullable values)
 - Lazy-loading support
+- Extendable repository base classes
+- Injectable mappers
 - PHP 8.4+ only, leveraging modern language features
 
 ## 📦 Usage
@@ -29,6 +31,9 @@ There are two main types of mappers:
 - `RecordMapper<Type>` — for mapping simple, immutable data records
 - `EntityRecordMapper<Type, PrimaryKeyType>` — for mapping richer domain entities, with support for repositories or
   lazy-loading
+
+These mappers are designed to be injected wherever data transformation is needed, such as in services, repositories, or
+controllers.
 
 ### Record Mapper Example
 
@@ -110,6 +115,75 @@ final class UserMapper extends EntityRecordMapper
 For nullable fields, use the `->nullable(...)` method on column definitions. This allows you to gracefully handle `NULL`
 values in your database rows.
 
+## 🗃️ Repositories
+
+This library also provides base repository classes that you can extend to perform actual database operations.
+
+### Record Repository Example
+
+```php
+/**
+ * @extends RecordRepository<Address>
+ */
+class AddressRepository extends RecordRepository
+{
+    public function __construct(Connection $connection, RecordMapper $mapper)
+    {
+        parent::__construct($mapper, $connection, 'addresses');
+    }
+
+    public function loadById(int $id): Address
+    {
+        return $this->selectOneWhere(['id' => $id]) ?? throw new Exception('Address not found');
+    }
+}
+```
+
+### Entity Repository Example
+
+```php
+/**
+ * @extends EntityRecordRepository<User, string>
+ */
+class UserRepository extends EntityRecordRepository
+{
+    public function __construct(Connection $connection, UserMapper $mapper)
+    {
+        parent::__construct($mapper, $connection, 'users');
+    }
+
+    public function loadById(string $id): User
+    {
+        return $this->selectEntityById($id) ?? throw new Exception('User not found');
+    }
+}
+```
+
+### 🔧 Repository Capabilities
+
+📘 `RecordRepository` Provides core operations for working with raw records:
+
+```php
+insertOne($entry)
+selectOneWhere(where: ['id' => 10])
+selectOneByQuery(selectQuery: 'SELECT * FROM table where id = :id', bindings: ['id' => 10])
+selectManyWhere([where: 'deleted_at' => null], limit: 10, offset: 100)
+selectManyByQuery(selectQuery: 'SELECT * FROM table where deleted_at is null', bindings: [])
+existsWhere(where: ['id' => 10])
+deleteWhere(where: ['id' => 10])
+updateWhere(values: ['name' => 'Arthur Dent', 'date_of_birth' => '1990-01-01'], where: ['id' => 10])
+```
+
+📙 `EntityRecordRepository` extends RecordRepository with additional features for managing entity lifecycles:
+
+```php
+selectEntityById(id: 10)
+updateOne(entity: $user)
+updateMany($user1, $user2, $user3, ...)
+deleteOne(entity: $user)
+deleteMany($user1, $user2, $user3, ...)
+```
+
 ## 🤝 Contributing
 
 Contributions are welcome! If you have ideas, find a bug, or want to improve the library, feel free to:
@@ -120,9 +194,13 @@ Contributions are welcome! If you have ideas, find a bug, or want to improve the
 
 Please follow PSR-12 coding standards and ensure tests pass before submitting changes.
 
+## 🚀 Next steps
+- Query builder
+- Extend where comparisons
+
 ## 📄 License
 
-This project is open-sourced under the [MIT license](./LICENSE).
+This project is open-sourced under the [MIT license](LICENSE).
 
 ---
 
