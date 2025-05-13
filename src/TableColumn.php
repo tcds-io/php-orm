@@ -8,6 +8,7 @@ use BackedEnum;
 use Closure;
 use DateTimeInterface;
 use Tcds\Io\Orm\Column\BoolColumn;
+use Tcds\Io\Orm\Column\Column;
 use Tcds\Io\Orm\Column\DateColumn;
 use Tcds\Io\Orm\Column\DateTimeColumn;
 use Tcds\Io\Orm\Column\DateTimeImmutableColumn;
@@ -17,13 +18,16 @@ use Tcds\Io\Orm\Column\IntegerColumn;
 use Tcds\Io\Orm\Column\StringColumn;
 
 /**
- * @template T
+ * @template EntryType
  */
-trait TableColumn
+abstract class TableColumn
 {
+    /** @var list<Column<EntryType, mixed>> */
+    public private(set) array $columns = [];
+
     /**
-     * @param Closure(T $entry): string $value
-     * @return StringColumn<T>
+     * @param Closure(EntryType $entry): string $value
+     * @return StringColumn<EntryType>
      */
     protected function string(string $name, Closure $value): StringColumn
     {
@@ -34,8 +38,8 @@ trait TableColumn
     }
 
     /**
-     * @param Closure(T $entry): bool $value
-     * @return BoolColumn<T>
+     * @param Closure(EntryType $entry): bool $value
+     * @return BoolColumn<EntryType>
      */
     protected function boolean(string $name, Closure $value): BoolColumn
     {
@@ -46,8 +50,8 @@ trait TableColumn
     }
 
     /**
-     * @param Closure(T $entry): numeric $value
-     * @return FloatColumn<T>
+     * @param Closure(EntryType $entry): float $value
+     * @return FloatColumn<EntryType>
      */
     protected function numeric(string $name, Closure $value): FloatColumn
     {
@@ -58,8 +62,8 @@ trait TableColumn
     }
 
     /**
-     * @param Closure(T $entry): int $value
-     * @return IntegerColumn<T>
+     * @param Closure(EntryType $entry): int $value
+     * @return IntegerColumn<EntryType>
      */
     protected function integer(string $name, Closure $value): IntegerColumn
     {
@@ -70,8 +74,8 @@ trait TableColumn
     }
 
     /**
-     * @param Closure(T $entry): DateTimeInterface $value
-     * @return DateColumn<T>
+     * @param Closure(EntryType $entry): DateTimeInterface $value
+     * @return DateColumn<EntryType>
      */
     protected function date(string $name, Closure $value): DateColumn
     {
@@ -82,8 +86,8 @@ trait TableColumn
     }
 
     /**
-     * @param Closure(T $entry): DateTimeInterface $value
-     * @return DateTimeColumn<T>
+     * @param Closure(EntryType $entry): DateTimeInterface $value
+     * @return DateTimeColumn<EntryType>
      */
     protected function datetime(string $name, Closure $value): DateTimeColumn
     {
@@ -94,8 +98,8 @@ trait TableColumn
     }
 
     /**
-     * @param Closure(T $entry): DateTimeInterface $value
-     * @return DateTimeImmutableColumn<T>
+     * @param Closure(EntryType $entry): DateTimeInterface $value
+     * @return DateTimeImmutableColumn<EntryType>
      */
     protected function datetimeImmutable(string $name, Closure $value): DateTimeImmutableColumn
     {
@@ -106,10 +110,10 @@ trait TableColumn
     }
 
     /**
-     * @template E of BackedEnum
-     * @param class-string<E> $class
-     * @param Closure(T $entry): DateTimeInterface $value
-     * @return EnumColumn<T>
+     * @template EnumType of BackedEnum
+     * @param class-string<EnumType> $class
+     * @param Closure(EntryType $entry): EnumType $value
+     * @return EnumColumn<EntryType, EnumType>
      */
     protected function enum(string $class, string $name, Closure $value): EnumColumn
     {

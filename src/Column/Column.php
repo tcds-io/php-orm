@@ -8,12 +8,12 @@ use Closure;
 
 /**
  * @template Entry
- * @template Type
+ * @template Value
  */
 abstract readonly class Column
 {
     /**
-     * @param Closure(Entry $record): Type $value
+     * @param Closure(Entry $record): Value $value
      */
     public function __construct(
         public string $name,
@@ -23,7 +23,7 @@ abstract readonly class Column
 
     /**
      * @param Entry $entry
-     * @return Type|null
+     * @return Value|null
      */
     public function plain($entry)
     {
@@ -32,7 +32,7 @@ abstract readonly class Column
 
     /**
      * @param array<string, mixed> $row
-     * @return Type
+     * @return Value
      */
     public function value(array $row)
     {
@@ -41,7 +41,7 @@ abstract readonly class Column
 
     /**
      * @param array<string, mixed> $row
-     * @return Type|null
+     * @return Value|null
      */
     public function nullable(array $row)
     {

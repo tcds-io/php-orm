@@ -7,17 +7,14 @@ namespace Tcds\Io\Orm;
 use Tcds\Io\Orm\Connection\Connection;
 
 /**
- * @template T
- * @template FK
- * @extends RecordMapper<T>
- * @internal
+ * @template EntryType
+ * @template ForeignKeyType
+ * @extends RecordRepository<EntryType>
  */
 abstract class EntityRecordRepository extends RecordRepository
 {
-    /**
-     * @param EntityRecordMapper<T> $entityMapper
-     */
     public function __construct(
+        /** @var EntityRecordMapper<EntryType, ForeignKeyType> */
         protected EntityRecordMapper $entityMapper,
         Connection $connection,
         string $table,
@@ -26,8 +23,8 @@ abstract class EntityRecordRepository extends RecordRepository
     }
 
     /**
-     * @param FK $id
-     * @return T|null
+     * @param ForeignKeyType $id
+     * @return EntryType|null
      */
     public function selectEntityById($id)
     {
@@ -35,7 +32,7 @@ abstract class EntityRecordRepository extends RecordRepository
     }
 
     /**
-     * @param T $entity
+     * @param EntryType $entity
      */
     public function updateOne($entity): void
     {
@@ -46,7 +43,7 @@ abstract class EntityRecordRepository extends RecordRepository
     }
 
     /**
-     * @param T ...$entities
+     * @param EntryType ...$entities
      */
     public function updateMany(...$entities): void
     {
@@ -56,7 +53,7 @@ abstract class EntityRecordRepository extends RecordRepository
     }
 
     /**
-     * @param T $entity
+     * @param EntryType $entity
      */
     public function deleteOne($entity): void
     {
@@ -64,7 +61,7 @@ abstract class EntityRecordRepository extends RecordRepository
     }
 
     /**
-     * @param T ...$entities
+     * @param EntryType ...$entities
      */
     public function deleteMany(...$entities): void
     {

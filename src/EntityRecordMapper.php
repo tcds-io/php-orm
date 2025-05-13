@@ -7,17 +7,17 @@ namespace Tcds\Io\Orm;
 use Tcds\Io\Orm\Column\Column;
 
 /**
- * @template T
- * @template FK of int|string
- * @extends RecordMapper<T>
+ * @template EntryType
+ * @template ForeignKeyType
+ * @extends RecordMapper<EntryType>
  */
 abstract class EntityRecordMapper extends RecordMapper
 {
-    /** @var Column<T, FK> */
+    /** @var Column<EntryType, ForeignKeyType> */
     public readonly Column $primaryKey;
 
     /**
-     * @param Column<T, FK> $primaryKey
+     * @param Column<EntryType, ForeignKeyType> $primaryKey
      */
     public function __construct(Column $primaryKey)
     {

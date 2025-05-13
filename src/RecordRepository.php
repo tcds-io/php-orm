@@ -10,11 +10,12 @@ use Tcds\Io\Orm\Connection\Connection;
 use Traversable;
 
 /**
- * @template T
+ * @template EntryType
  */
 abstract class RecordRepository
 {
     public function __construct(
+        /** @var RecordMapper<EntryType> */
         protected readonly RecordMapper $mapper,
         protected readonly Connection $connection,
         protected readonly string $table,
@@ -22,7 +23,7 @@ abstract class RecordRepository
     }
 
     /**
-     * @param T $entry
+     * @param EntryType $entry
      */
     public function insertOne($entry): void
     {
@@ -35,7 +36,7 @@ abstract class RecordRepository
 
     /**
      * @param array<string, mixed> $where
-     * @return T|null
+     * @return EntryType|null
      */
     public function selectOneWhere(array $where)
     {
@@ -51,7 +52,7 @@ abstract class RecordRepository
 
     /**
      * @param array<string, mixed> $bindings
-     * @return T|null
+     * @return EntryType|null
      */
     public function selectOneByQuery(string $selectQuery, array $bindings)
     {
@@ -65,7 +66,7 @@ abstract class RecordRepository
 
     /**
      * @param array<string, mixed> $where
-     * @return Traversable<T>
+     * @return Traversable<EntryType>
      */
     public function selectManyWhere(array $where = [], ?int $limit = null, ?int $offset = null): Traversable
     {
@@ -82,7 +83,7 @@ abstract class RecordRepository
 
     /**
      * @param array<string, mixed> $bindings
-     * @return Traversable<T>
+     * @return Traversable<EntryType>
      */
     public function selectManyByQuery(string $selectQuery, array $bindings): Traversable
     {

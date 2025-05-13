@@ -9,8 +9,8 @@ use DateTimeInterface;
 use Override;
 
 /**
- * @template Entry of object
- * @extends Column<Entry, DateTimeInterface, string>
+ * @template EntryType
+ * @extends Column<EntryType, DateTimeInterface>
  */
 readonly class DateColumn extends Column
 {
@@ -23,6 +23,9 @@ readonly class DateColumn extends Column
 
     #[Override] public function value(array $row): DateTime
     {
-        return new DateTime(parent::value($row));
+        /** @var string $value */
+        $value = parent::value($row);
+
+        return new DateTime($value);
     }
 }
