@@ -43,7 +43,7 @@ jobs:
         run: vendor/bin/phpunit --testdox --color=always
 
       - name: Mutation tests
-        run: vendor/bin/infection --threads=2 --min-msi=100 --ansi && cat var/log/infection.log
+        run: vendor/bin/infection --threads=2 --min-msi=100 --ansi
 
       - name: Mutation Report
         run: cat var/log/infection.log
