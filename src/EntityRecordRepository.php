@@ -8,13 +8,13 @@ use Tcds\Io\Orm\Connection\Connection;
 
 /**
  * @template EntryType
- * @template ForeignKeyType
+ * @template PrimaryKeyType
  * @extends RecordRepository<EntryType>
  */
 abstract class EntityRecordRepository extends RecordRepository
 {
     public function __construct(
-        /** @var EntityRecordMapper<EntryType, ForeignKeyType> */
+        /** @var EntityRecordMapper<EntryType, PrimaryKeyType> */
         protected EntityRecordMapper $entityMapper,
         Connection $connection,
         string $table,
@@ -23,7 +23,7 @@ abstract class EntityRecordRepository extends RecordRepository
     }
 
     /**
-     * @param ForeignKeyType $id
+     * @param PrimaryKeyType $id
      * @return EntryType|null
      */
     public function selectEntityById($id)

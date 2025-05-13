@@ -13,6 +13,9 @@ use Tcds\Io\Orm\Column\IntegerColumn;
 use Tcds\Io\Orm\Column\StringColumn;
 use Tcds\Io\Orm\RecordMapper;
 
+/**
+ * @extends RecordMapper<Address>
+ */
 final class AddressMapper extends RecordMapper
 {
     private IntegerColumn $id;
