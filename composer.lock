@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "560775ef7eb8334cf9e924d3c46cf14c",
+    "content-hash": "b8511f52080ee9ab941d02ca33f14477",
     "packages": [
         {
             "name": "tcds-io/php-better-generics",
