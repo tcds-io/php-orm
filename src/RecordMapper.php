@@ -8,16 +8,10 @@ use Tcds\Io\Orm\Column\Column;
 
 /**
  * @template T
- * @extends RecordRepository<T>
+ * @extends TableColumn<T>
  */
-abstract class RecordMapper
+abstract class RecordMapper extends TableColumn
 {
-    /** @use TableColumn<T> */
-    use TableColumn;
-
-    /** @var list<Column<T, mixed>> */
-    public private(set) array $columns = [];
-
     /**
      * @param array<string, mixed> $row
      * @return T

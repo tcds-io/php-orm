@@ -9,14 +9,14 @@ use Closure;
 use Override;
 
 /**
- * @template Entry of object
- * @template Enum of class-string
- * @extends Column<Entry, BackedEnum>
+ * @template EntryType
+ * @template ValueType of BackedEnum
+ * @extends Column<EntryType, ValueType>
  */
 readonly class EnumColumn extends Column
 {
     /**
-     * @param class-string<Enum> $class
+     * @param class-string<ValueType> $class
      */
     public function __construct(
         private string $class,
@@ -26,17 +26,16 @@ readonly class EnumColumn extends Column
         parent::__construct($name, $value);
     }
 
-    #[Override] public function plain($entry): ?string
+    #[Override] public function plain($entry): string|int|null
     {
         return parent::plain($entry)?->value;
     }
 
-    /**
-     * @param array $row
-     * @return Enum
-     */
     #[Override] public function value(array $row)
     {
-        return $this->class::from(parent::value($row));
+        /** @var string $value */
+        $value = parent::value($row);
+
+        return $this->class::from($value);
     }
 }

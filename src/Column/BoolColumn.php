@@ -7,12 +7,12 @@ namespace Tcds\Io\Orm\Column;
 use Override;
 
 /**
- * @template Entry of object
- * @extends Column<Entry, bool>
+ * @template EntryType
+ * @extends Column<EntryType, bool>
  */
 readonly class BoolColumn extends Column
 {
-    #[Override] public function plain($entry): bool
+    #[Override] public function plain($entry): ?bool
     {
         return parent::plain($entry);
     }
