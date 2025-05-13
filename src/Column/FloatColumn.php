@@ -6,8 +6,8 @@ namespace Tcds\Io\Orm\Column;
 
 /**
  * @template Entry of object
- * @extends Column<Entry, numeric>
+ * @extends Column<Entry, float>
  */
-readonly class NumericColumn extends Column
+readonly class FloatColumn extends Column
 {
 }

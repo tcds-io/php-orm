@@ -7,16 +7,13 @@ namespace Tcds\Io\Orm;
 use Tcds\Io\Orm\Column\Column;
 
 /**
- * @template T of object
+ * @template T
  * @extends RecordRepository<T>
  */
 abstract class RecordMapper
 {
     /** @use TableColumn<T> */
     use TableColumn;
-
-    /** @use TableColumnNullable<T> */
-    use TableColumnNullable;
 
     /** @var list<Column<T, mixed>> */
     public private(set) array $columns = [];
@@ -25,16 +22,16 @@ abstract class RecordMapper
      * @param array<string, mixed> $row
      * @return T
      */
-    abstract public function entry(array $row);
+    abstract public function map(array $row);
 
     /**
      * @param T $entry
      * @return array<string, mixed>
      */
-    public function values($entry): array
+    public function plain($entry): array
     {
         $entries = array_map(
-            fn(Column $column) => [$column->name => $column->valueOn($entry)],
+            fn(Column $column) => [$column->name => $column->plain($entry)],
             $this->columns,
         );
 

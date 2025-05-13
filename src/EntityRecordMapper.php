@@ -7,7 +7,7 @@ namespace Tcds\Io\Orm;
 use Tcds\Io\Orm\Column\Column;
 
 /**
- * @template T of object
+ * @template T
  * @template FK of int|string
  * @extends RecordMapper<T>
  */

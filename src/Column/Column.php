@@ -7,7 +7,7 @@ namespace Tcds\Io\Orm\Column;
 use Closure;
 
 /**
- * @template Entry of object
+ * @template Entry
  * @template Type
  */
 abstract readonly class Column
@@ -23,10 +23,30 @@ abstract readonly class Column
 
     /**
      * @param Entry $entry
-     * @return Type
+     * @return Type|null
      */
-    public function valueOn($entry)
+    public function plain($entry)
     {
         return ($this->value)($entry);
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     * @return Type
+     */
+    public function value(array $row)
+    {
+        return $row[$this->name];
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     * @return Type|null
+     */
+    public function nullable(array $row)
+    {
+        return ($row[$this->name] ?? null)
+            ? static::value($row)
+            : null;
     }
 }
