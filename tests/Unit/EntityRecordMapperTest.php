@@ -68,8 +68,8 @@ class EntityRecordMapperTest extends TestCase
     {
         $this->addressRepository
             ->expects($this->once())
-            ->method('loadById')
-            ->with($userId)
-            ->willReturn($address);
+            ->method('loadAllByIds')
+            ->with([$userId])
+            ->willReturn(listOf($address));
     }
 }

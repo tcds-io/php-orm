@@ -88,6 +88,9 @@ final class AddressMapper extends RecordMapper
  */
 final class UserMapper extends EntityRecordMapper
 {
+    /** @var LazyBuffer<string, Address> */
+    private LazyBuffer $addressLoader;
+
     public function __construct(
         private readonly AddressRepository $addressRepository,
     ) {
@@ -96,24 +99,87 @@ final class UserMapper extends EntityRecordMapper
         $this->string('name', fn(User $entity) => $entity->name);
         $this->date('date_of_birth', fn(User $entity) => $entity->dateOfBirth);
         $this->integer('address_id', fn(User $entity) => $entity->address->id);
+
+        $this->addressLoader = lazyBufferOf(Address::class, function (array $ids) {
+            return listOf($this->addressRepository->loadAllByIds($ids))
+                ->indexedBy(fn(Address $address) => $address->id)
+                ->entries();
+        });
     }
 
-    public function map(array $row): User
+    #[Override] public function map(array $row): User
     {
         return new User(
             id: $row['id'],
             name: $row['name'],
             dateOfBirth: new DateTime($row['date_of_birth']),
-            address: lazyOf(Address::class, fn() => $this->addressRepository->loadById($row['address_id'])),
+            address: $this->addressLoader->lazyOf($row['address_id']),
         );
     }
 }
+
 ```
 
 ### Nullable Support
 
 For nullable fields, use the `->nullable(...)` method on column definitions. This allows you to gracefully handle `NULL`
 values in your database rows.
+
+### Foreign keys and objects
+
+The orm does not resolve foreign keys and objects automatically,
+instead you have to inject the object repository and load as needed:
+
+```php
+return new User(
+    ...,
+    /** lazy load foreign object */
+    address: lazyOf(Address::class, fn() => $addressRepository->loadById($row['address_id'])),
+    /** eager load foreign object */
+    address: $addressRepository->loadById($row['address_id']),
+);
+```
+
+### Lazy loading
+
+Records can be lazy loaded with `lazyOf` function, which receives an initializer and loads the entry only when any of its properties are called:
+```php
+/** lazy object */
+$address = lazyOf(
+    /** The class to be loaded */
+    Address::class,
+    /** The object initializer */
+    fn() => $addressRepository->loadById($addressId),
+);
+
+/** loaded object */
+$street = $address->street;
+```
+
+### Solving N+1 problems
+
+N+1 can be solved with `lazyBufferOf` function, it manages buffered and loaded records,
+all buffered records are loaded at once when any of the entries are loaded,
+and all loaded records are returned right away without additional loader calls 
+
+```php
+$addressLoader = lazyBufferOf(
+    /** The class to be loaded */
+    Address::class,
+    /** The object list loader */
+    function (array $bufferedIds) {
+        listOf($this->addressRepository->loadAllByIds($ids))
+          ->indexedBy(fn(Address $address) => $address->id)
+          ->entries() 
+    },
+);
+
+/** lazy object */
+$address = $addressLoader->lazyOf($addressId),
+
+/** loaded object */
+$street = $address->street;
+```
 
 ## 🗃️ Repositories
 
