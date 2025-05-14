@@ -117,7 +117,6 @@ final class UserMapper extends EntityRecordMapper
         );
     }
 }
-
 ```
 
 ### Nullable Support
@@ -127,8 +126,8 @@ values in your database rows.
 
 ### Foreign keys and objects
 
-The orm does not resolve foreign keys and objects automatically,
-instead you have to inject the object repository and load as needed:
+The ORM does not resolve foreign keys and objects automatically.
+Instead, you must inject the object repository and load the object as needed:
 
 ```php
 return new User(
@@ -142,7 +141,8 @@ return new User(
 
 ### Lazy loading
 
-Records can be lazy loaded with `lazyOf` function, which receives an initializer and loads the entry only when any of its properties are called:
+Records can be lazy-loaded with the `lazyOf` function, which receives an initializer and loads the entry only when any of its properties are accessed:
+
 ```php
 /** lazy object */
 $address = lazyOf(
@@ -158,9 +158,9 @@ $street = $address->street;
 
 ### Solving N+1 problems
 
-N+1 can be solved with `lazyBufferOf` function, it manages buffered and loaded records,
-all buffered records are loaded at once when any of the entries are loaded,
-and all loaded records are returned right away without additional loader calls 
+N+1 can be solved with the `lazyBufferOf` function, which manages buffered and loaded records.
+All buffered records are loaded at once when any of the entries are accessed,
+and all previously loaded records are returned immediately without additional loader calls.
 
 ```php
 $addressLoader = lazyBufferOf(
@@ -168,14 +168,14 @@ $addressLoader = lazyBufferOf(
     Address::class,
     /** The object list loader */
     function (array $bufferedIds) {
-        listOf($this->addressRepository->loadAllByIds($ids))
+        listOf($this->addressRepository->loadAllByIds($bufferedIds))
           ->indexedBy(fn(Address $address) => $address->id)
-          ->entries() 
+          ->entries();
     },
 );
 
 /** lazy object */
-$address = $addressLoader->lazyOf($addressId),
+$address = $addressLoader->lazyOf($addressId);
 
 /** loaded object */
 $street = $address->street;
@@ -261,6 +261,7 @@ Contributions are welcome! If you have ideas, find a bug, or want to improve the
 Please follow PSR-12 coding standards and ensure tests pass before submitting changes.
 
 ## 🚀 Next steps
+
 - Query builder
 - Extend where comparisons
 
