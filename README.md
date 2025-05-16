@@ -231,13 +231,13 @@ class UserRepository extends EntityRecordRepository
 
 ```php
 insertOne($entry)
-selectOneWhere(where: ['id' => 10])
+selectOneWhere(where: where(['id' => equalsTo(10)]))
 selectOneByQuery(selectQuery: 'SELECT * FROM table where id = :id', bindings: ['id' => 10])
-selectManyWhere([where: 'deleted_at' => null], limit: 10, offset: 100)
+selectManyWhere(where: where(['deleted_at' => isNull()]), limit: 10, offset: 100)
 selectManyByQuery(selectQuery: 'SELECT * FROM table where deleted_at is null', bindings: [])
-existsWhere(where: ['id' => 10])
-deleteWhere(where: ['id' => 10])
-updateWhere(values: ['name' => 'Arthur Dent', 'date_of_birth' => '1990-01-01'], where: ['id' => 10])
+existsWhere(where: where(['id' => equalsTo(10)]))
+deleteWhere(where: where(['id' => equalsTo(10)]))
+updateWhere(values: ['name' => 'Arthur Dent', 'date_of_birth' => '1990-01-01'], where: where(['id' => equalsTo(10)]))
 ```
 
 📙 `EntityRecordRepository` extends RecordRepository with additional features for managing entity lifecycles:
@@ -259,11 +259,6 @@ Contributions are welcome! If you have ideas, find a bug, or want to improve the
 - Submit a pull request
 
 Please follow PSR-12 coding standards and ensure tests pass before submitting changes.
-
-## 🚀 Next steps
-
-- Query builder
-- Extend where comparisons
 
 ## 📄 License
 

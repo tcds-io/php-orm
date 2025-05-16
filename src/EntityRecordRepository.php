@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tcds\Io\Orm;
 
 use Tcds\Io\Orm\Connection\Connection;
+use Tcds\Io\Orm\Query\Query;
 
 /**
  * @template EntryType
@@ -28,7 +29,7 @@ abstract class EntityRecordRepository extends RecordRepository
      */
     public function selectEntityById($id)
     {
-        return $this->selectOneWhere(['id' => $id]);
+        return $this->selectOneWhere(where(['id' => equalsTo($id)]));
     }
 
     /**
@@ -38,7 +39,7 @@ abstract class EntityRecordRepository extends RecordRepository
     {
         $this->updateWhere(
             $this->mapper->plain($entity),
-            ['id' => $this->entityMapper->primaryKey->plain($entity)],
+            $this->equalsToPrimaryKey($entity),
         );
     }
 
@@ -57,7 +58,9 @@ abstract class EntityRecordRepository extends RecordRepository
      */
     public function deleteOne($entity): void
     {
-        $this->deleteWhere(['id' => $this->entityMapper->primaryKey->plain($entity)]);
+        $this->deleteWhere(
+            $this->equalsToPrimaryKey($entity),
+        );
     }
 
     /**
@@ -68,5 +71,15 @@ abstract class EntityRecordRepository extends RecordRepository
         foreach ($entities as $entity) {
             $this->deleteOne($entity);
         }
+    }
+
+    /**
+     * @param EntryType $entity
+     */
+    private function equalsToPrimaryKey($entity): Query
+    {
+        return where([
+            'id' => equalsTo($this->entityMapper->primaryKey->plain($entity)),
+        ]);
     }
 }

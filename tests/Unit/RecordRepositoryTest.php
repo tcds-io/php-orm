@@ -8,6 +8,7 @@ use PDOStatement;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use Tcds\Io\Orm\Connection\Connection;
+use Tcds\Io\Orm\Connection\Driver;
 use Tcds\Io\Orm\RecordRepository;
 use Test\Tcds\Io\Orm\Fixtures\Address;
 use Test\Tcds\Io\Orm\Fixtures\AddressMapper;
@@ -23,6 +24,10 @@ class RecordRepositoryTest extends TestCase
     {
         $this->connection = $this->createMock(Connection::class);
         $this->statement = $this->createMock(PDOStatement::class);
+
+        $this->connection
+            ->method('driver')
+            ->willReturn(Driver::MYSQL);
 
         $this->manager = new class (new AddressMapper(), $this->connection, 'addresses') extends RecordRepository
         {
@@ -62,12 +67,12 @@ class RecordRepositoryTest extends TestCase
             ->expects($this->once())
             ->method('read')
             ->with(
-                "SELECT * FROM addresses WHERE id = :id LIMIT 1",
-                ['id' => 'address-xxx'],
+                "SELECT * FROM `addresses` WHERE `id` = ? LIMIT 1",
+                ['address-xxx'],
             )
             ->willReturn($this->statement);
 
-        $result = $this->manager->selectOneWhere(['id' => 'address-xxx']);
+        $result = $this->manager->selectOneWhere(where(['id' => equalsTo('address-xxx')]));
 
         $this->assertEquals(Address::second(), $result);
     }
@@ -102,13 +107,16 @@ class RecordRepositoryTest extends TestCase
             ->expects($this->once())
             ->method('read')
             ->with(
-                'SELECT * FROM addresses WHERE id = :id AND street = :street LIMIT 5 OFFSET 15',
-                ['id' => 'address-xxx', 'street' => "Galaxy Avenue"],
+                'SELECT * FROM `addresses` WHERE `id` = ? AND `street` = ? LIMIT 5 OFFSET 15',
+                ['address-xxx', "Galaxy Avenue"],
             )
             ->willReturn($this->statement);
 
         $result = $this->manager->selectManyWhere(
-            ['id' => 'address-xxx', 'street' => 'Galaxy Avenue'],
+            where([
+                'id' => equalsTo('address-xxx'),
+                'street' => equalsTo('Galaxy Avenue'),
+            ]),
             limit: 5,
             offset: 15,
         );
@@ -184,10 +192,10 @@ class RecordRepositoryTest extends TestCase
         $this->connection
             ->expects($this->once())
             ->method('read')
-            ->with("SELECT * FROM addresses WHERE id = :id LIMIT 1", ['id' => 'address-xxx'])
+            ->with("SELECT * FROM `addresses` WHERE `id` = ? LIMIT 1", ['address-xxx'])
             ->willReturn($this->statement);
 
-        $exists = $this->manager->existsWhere(['id' => 'address-xxx']);
+        $exists = $this->manager->existsWhere(where(['id' => equalsTo('address-xxx')]));
 
         $this->assertTrue($exists);
     }
@@ -200,10 +208,10 @@ class RecordRepositoryTest extends TestCase
         $this->connection
             ->expects($this->once())
             ->method('read')
-            ->with("SELECT * FROM addresses WHERE id = :id LIMIT 1", ['id' => 'address-xxx'])
+            ->with("SELECT * FROM `addresses` WHERE `id` = ? LIMIT 1", ['address-xxx'])
             ->willReturn($this->statement);
 
-        $exists = $this->manager->existsWhere(['id' => 'address-xxx']);
+        $exists = $this->manager->existsWhere(where(['id' => equalsTo('address-xxx')]));
 
         $this->assertFalse($exists);
     }
@@ -214,11 +222,11 @@ class RecordRepositoryTest extends TestCase
             ->expects($this->once())
             ->method('write')
             ->with(
-                "DELETE FROM addresses WHERE id = :id",
-                ['id' => 'address-xxx'],
+                "DELETE FROM `addresses` WHERE `id` = ?",
+                ['address-xxx'],
             );
 
-        $this->manager->deleteWhere(['id' => 'address-xxx']);
+        $this->manager->deleteWhere(where(['id' => equalsTo('address-xxx')]));
     }
 
     #[Test] public function update(): void
@@ -227,10 +235,10 @@ class RecordRepositoryTest extends TestCase
             ->expects($this->once())
             ->method('write')
             ->with(
-                "UPDATE addresses SET street = :street WHERE id = :id",
-                ['street' => 'Galaxy Avenue', 'id' => 'address-xxx'],
+                "UPDATE `addresses` SET `street` = ? WHERE `id` = ?",
+                ['Galaxy Avenue', 'address-xxx'],
             );
 
-        $this->manager->updateWhere(['street' => 'Galaxy Avenue'], ['id' => 'address-xxx']);
+        $this->manager->updateWhere(['street' => 'Galaxy Avenue'], where(['id' => equalsTo('address-xxx')]));
     }
 }

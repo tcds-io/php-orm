@@ -7,6 +7,7 @@ namespace Tcds\Io\Orm;
 use PDO;
 use Tcds\Io\Orm\Column\Column;
 use Tcds\Io\Orm\Connection\Connection;
+use Tcds\Io\Orm\Query\Query;
 use Traversable;
 
 /**
@@ -35,13 +36,12 @@ abstract class RecordRepository
     }
 
     /**
-     * @param array<string, mixed> $where
      * @return EntryType|null
      */
-    public function selectOneWhere(array $where)
+    public function selectOneWhere(Query $where)
     {
-        [$whereColumnsString, $whereBindings] = $this->prepareWhere($where);
-        $sql = trim("SELECT * FROM $this->table$whereColumnsString LIMIT 1");
+        [$whereColumnsString, $whereBindings] = $where->build($this->connection->driver());
+        $sql = trim("SELECT * FROM {$this->wrap($this->table)} $whereColumnsString LIMIT 1");
         $items = $this->connection->read($sql, $whereBindings);
 
         /** @var array<string, mixed> $item */
@@ -65,14 +65,13 @@ abstract class RecordRepository
     }
 
     /**
-     * @param array<string, mixed> $where
      * @return Traversable<EntryType>
      */
-    public function selectManyWhere(array $where = [], ?int $limit = null, ?int $offset = null): Traversable
+    public function selectManyWhere(?Query $where = null, ?int $limit = null, ?int $offset = null): Traversable
     {
-        [$whereColumnsString, $whereBindings] = $this->prepareWhere($where);
+        [$whereColumnsString, $whereBindings] = $where?->build($this->connection->driver()) ?? ['', []];
         $limitOffset = $this->prepareLimitOffset($limit, $offset);
-        $sql = trim("SELECT * FROM $this->table$whereColumnsString$limitOffset");
+        $sql = trim("SELECT * FROM {$this->wrap($this->table)} $whereColumnsString$limitOffset");
         $items = $this->connection->read($sql, $whereBindings);
 
         while ($item = $items->fetch(PDO::FETCH_ASSOC)) {
@@ -95,43 +94,36 @@ abstract class RecordRepository
         }
     }
 
-    /**
-     * @param array<string, mixed> $where
-     */
-    public function existsWhere(array $where): bool
+    public function existsWhere(Query $query): bool
     {
-        return $this->selectOneWhere($where) !== null;
+        return $this->selectOneWhere($query) !== null;
     }
 
-    /**
-     * @param array<string, mixed> $where
-     */
-    public function deleteWhere(array $where): void
+    public function deleteWhere(Query $where): void
     {
-        [$whereColumnsString, $whereBindings] = $this->prepareWhere($where);
-        $sql = trim("DELETE FROM $this->table$whereColumnsString");
+        [$whereColumnsString, $whereBindings] = $where->build($this->connection->driver());
+        $sql = trim("DELETE FROM {$this->wrap($this->table)} $whereColumnsString");
 
         $this->connection->write($sql, $whereBindings);
     }
 
     /**
      * @param array<string, mixed> $values
-     * @param array<string, mixed> $where
      */
-    public function updateWhere(array $values, array $where): void
+    public function updateWhere(array $values, Query $where): void
     {
         $columnBindings = [];
         $valuesBinding = [];
 
         foreach ($values as $column => $value) {
-            $columnBindings[] = "$column = :$column";
-            $valuesBinding[$column] = $value;
+            $columnBindings[] = "{$this->wrap($column)} = ?";
+            $valuesBinding[] = $value;
         }
 
         $columnBindingsString = join(", ", $columnBindings);
 
-        [$whereColumnsString, $whereBindings] = $this->prepareWhere($where);
-        $sql = trim("UPDATE $this->table SET $columnBindingsString$whereColumnsString");
+        [$whereColumnsString, $whereBindings] = $where->build($this->connection->driver());
+        $sql = trim("UPDATE {$this->wrap($this->table)} SET $columnBindingsString $whereColumnsString");
 
         $this->connection->write($sql, array_merge($valuesBinding, $whereBindings));
     }
@@ -141,28 +133,13 @@ abstract class RecordRepository
         return join(', ', array_map(fn(Column $column) => ":$column->name", $this->mapper->columns));
     }
 
-    /**
-     * @param array<string, mixed> $where
-     * @return array{0: string, 1: array<string, mixed>}
-     */
-    private function prepareWhere(array $where): array
-    {
-        $whereColumns = [];
-        $whereBindings = [];
-
-        foreach ($where as $column => $value) {
-            $whereColumns[] = "$column = :$column";
-            $whereBindings[$column] = $value;
-        }
-
-        return [
-            empty($whereColumns) ? '' : sprintf(" WHERE %s", join(' AND ', $whereColumns)),
-            $whereBindings,
-        ];
-    }
-
     private function prepareLimitOffset(?int $limit, ?int $offset): string
     {
         return ($limit ? " LIMIT $limit" : '') . ($offset ? " OFFSET $offset" : '');
+    }
+
+    private function wrap(string $column): string
+    {
+        return $this->connection->driver()->wrap($column);
     }
 }

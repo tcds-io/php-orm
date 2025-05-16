@@ -7,7 +7,7 @@ namespace Test\Tcds\Io\Orm\Unit\Connection\Pdo;
 use PDO;
 use PDOException;
 use PHPUnit\Framework\MockObject\MockObject;
-use Tcds\Io\Orm\Connection\ConnectionDriver;
+use Tcds\Io\Orm\Connection\Driver;
 use Tcds\Io\Orm\Connection\Pdo\NestedTransactionConnection;
 use Test\Tcds\Io\Orm\TestCase;
 
@@ -24,9 +24,9 @@ class NestedTransactionConnectionTest extends TestCase
 
         $this->connection = new class ($read, $this->write) extends NestedTransactionConnection
         {
-            public function driver(): ConnectionDriver
+            public function driver(): Driver
             {
-                return ConnectionDriver::GENERIC;
+                return Driver::GENERIC;
             }
         };
     }
