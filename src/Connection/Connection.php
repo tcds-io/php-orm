@@ -8,7 +8,7 @@ use PDOStatement;
 
 interface Connection
 {
-    public function driver(): ConnectionDriver;
+    public function driver(): Driver;
 
     public function begin(): void;
 

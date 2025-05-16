@@ -25,7 +25,10 @@
   "autoload": {
     "psr-4": {
       "Tcds\\Io\\Orm\\": "src/"
-    }
+    },
+    "files": [
+      "src/Functions/query.php"
+    ]
   },
   "autoload-dev": {
     "psr-4": {

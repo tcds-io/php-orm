@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tcds\Io\Orm\Connection\Pdo;
 
 use PDO;
-use Tcds\Io\Orm\Connection\ConnectionDriver;
+use Tcds\Io\Orm\Connection\Driver;
 
 class MysqlConnection extends NestedTransactionConnection
 {
@@ -17,8 +17,8 @@ class MysqlConnection extends NestedTransactionConnection
         parent::__construct($read, $write);
     }
 
-    public function driver(): ConnectionDriver
+    public function driver(): Driver
     {
-        return ConnectionDriver::MYSQL;
+        return Driver::MYSQL;
     }
 }

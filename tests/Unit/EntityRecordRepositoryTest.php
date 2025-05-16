@@ -7,6 +7,7 @@ namespace Test\Tcds\Io\Orm\Unit;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use Tcds\Io\Orm\Connection\Connection;
+use Tcds\Io\Orm\Connection\Driver;
 use Tcds\Io\Orm\EntityRecordRepository;
 use Test\Tcds\Io\Orm\Fixtures\AddressRepository;
 use Test\Tcds\Io\Orm\Fixtures\User;
@@ -26,6 +27,10 @@ class EntityRecordRepositoryTest extends TestCase
         $this->connection = $this->createMock(Connection::class);
         $this->addressRepository = $this->createMock(AddressRepository::class);
 
+        $this->connection
+            ->method('driver')
+            ->willReturn(Driver::MYSQL);
+
         $this->repository = new UserRepository(
             $this->connection,
             new UserMapper($this->addressRepository),
@@ -37,7 +42,7 @@ class EntityRecordRepositoryTest extends TestCase
         $this->connection
             ->expects($this->once())
             ->method('read')
-            ->with('SELECT * FROM users WHERE id = :id LIMIT 1', ['id' => 'galaxy-1']);
+            ->with('SELECT * FROM `users` WHERE `id` = ? LIMIT 1', ['galaxy-1']);
 
         $this->repository->selectEntityById('galaxy-1');
     }
@@ -48,13 +53,8 @@ class EntityRecordRepositoryTest extends TestCase
             ->expects($this->exactly(1))
             ->method('write')
             ->with(
-                'UPDATE users SET id = :id, name = :name, date_of_birth = :date_of_birth, address_id = :address_id WHERE id = :id',
-                [
-                    'id' => 1,
-                    'name' => 'First User',
-                    'date_of_birth' => '2020-01-01',
-                    'address_id' => 1,
-                ],
+                'UPDATE `users` SET `id` = ?, `name` = ?, `date_of_birth` = ?, `address_id` = ? WHERE `id` = ?',
+                [1, 'First User', '2020-01-01', 1, 1],
             );
 
         $this->repository->updateOne(User::first());
@@ -70,21 +70,23 @@ class EntityRecordRepositoryTest extends TestCase
             ->with($this->consecutive(
                 $matcher,
                 [
-                    'UPDATE users SET id = :id, name = :name, date_of_birth = :date_of_birth, address_id = :address_id WHERE id = :id',
+                    'UPDATE `users` SET `id` = ?, `name` = ?, `date_of_birth` = ?, `address_id` = ? WHERE `id` = ?',
                     [
-                        'id' => 1,
-                        'name' => 'First User',
-                        'date_of_birth' => '2020-01-01',
-                        'address_id' => 1,
+                        1,
+                        'First User',
+                        '2020-01-01',
+                        1,
+                        1,
                     ],
                 ],
                 [
-                    'UPDATE users SET id = :id, name = :name, date_of_birth = :date_of_birth, address_id = :address_id WHERE id = :id',
+                    'UPDATE `users` SET `id` = ?, `name` = ?, `date_of_birth` = ?, `address_id` = ? WHERE `id` = ?',
                     [
-                        'id' => 2,
-                        'name' => 'Second User',
-                        'date_of_birth' => '2022-10-15',
-                        'address_id' => 2,
+                        2,
+                        'Second User',
+                        '2022-10-15',
+                        2,
+                        2,
                     ],
                 ],
             ));
@@ -101,8 +103,8 @@ class EntityRecordRepositoryTest extends TestCase
             ->expects($this->exactly(1))
             ->method('write')
             ->with(
-                'DELETE FROM users WHERE id = :id',
-                ['id' => 1],
+                'DELETE FROM `users` WHERE `id` = ?',
+                [1],
             );
 
         $this->repository->deleteOne(User::first());
@@ -118,12 +120,12 @@ class EntityRecordRepositoryTest extends TestCase
             ->with($this->consecutive(
                 $matcher,
                 [
-                    'DELETE FROM users WHERE id = :id',
-                    ['id' => 1],
+                    'DELETE FROM `users` WHERE `id` = ?',
+                    [1],
                 ],
                 [
-                    'DELETE FROM users WHERE id = :id',
-                    ['id' => 2],
+                    'DELETE FROM `users` WHERE `id` = ?',
+                    [2],
                 ],
             ));
 

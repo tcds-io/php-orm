@@ -8,7 +8,7 @@ use Exception;
 use PDO;
 use PDOStatement;
 use PHPUnit\Framework\MockObject\MockObject;
-use Tcds\Io\Orm\Connection\ConnectionDriver;
+use Tcds\Io\Orm\Connection\Driver;
 use Tcds\Io\Orm\Connection\Pdo\GenericConnection;
 use Test\Tcds\Io\Orm\TestCase;
 
@@ -28,9 +28,9 @@ class GenericConnectionTest extends TestCase
 
         $this->connection = new class ($this->read, $this->write) extends GenericConnection
         {
-            public function driver(): ConnectionDriver
+            public function driver(): Driver
             {
-                return ConnectionDriver::GENERIC;
+                return Driver::GENERIC;
             }
         };
     }
@@ -42,9 +42,9 @@ class GenericConnectionTest extends TestCase
 
         new class ($this->read, $this->write) extends GenericConnection
         {
-            public function driver(): ConnectionDriver
+            public function driver(): Driver
             {
-                return ConnectionDriver::GENERIC;
+                return Driver::GENERIC;
             }
         };
     }
